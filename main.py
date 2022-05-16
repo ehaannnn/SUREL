@@ -93,6 +93,8 @@ if __name__ == '__main__':
         args.metric = 'Hits@100'
     elif 'citation' in args.dataset:
         args.metric = 'mrr'
+    elif 'yelp' in args.dataset:
+        args.metric = 'Hits@10'
     else:
         raise NotImplementedError
 
