@@ -21,7 +21,7 @@ if __name__ == '__main__':
 
     # general model and training setting
     parser.add_argument('--dataset', type=str, default='ogbl-citation2', help='dataset name',
-                        choices=['ogbl-ppa', 'ogbl-ddi', 'ogbl-citation2', 'ogbl-collab', 'mag'])
+                        choices=['ogbl-ppa', 'ogbl-ddi', 'ogbl-citation2', 'ogbl-collab', 'mag', 'yelp'])
     parser.add_argument('--model', type=str, default='RNN', help='base model to use',
                         choices=['RNN', 'MLP', 'Transformer', 'GNN'])
     parser.add_argument('--layers', type=int, default=2, help='number of layers')
