@@ -9,7 +9,6 @@ import itertools
 
 import os
 import json
-import tqdm
 
 import torch
 from ogb.linkproppred import PygLinkPropPredDataset
@@ -20,7 +19,6 @@ from collections import Counter
 import re
 
 from utils import get_pos_neg_edges, np_sampling
-
 
 class Yelp():
     def __init__(self):
@@ -291,7 +289,7 @@ class Yelp():
 
 
 
-        pbar = tqdm.tqdm(unique_uids, total=len(unique_uids))
+        pbar = tqdm(unique_uids, total=len(unique_uids))
 
         sorted_reviewtip = reviewtip.sort_values(['bus_count', 'user_count'])
 
