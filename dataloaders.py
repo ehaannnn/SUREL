@@ -427,6 +427,7 @@ class DEDataset():
         net_obsrv = csr_matrix((obsrv_e_weight, (obsrv_edge[:, 0].numpy(), obsrv_edge[:, 1].numpy())),
                                shape=(max_obsrv_idx + 1, max_obsrv_idx + 1))
         G_obsrv = net_obsrv + net_obsrv.T
+        print(sum(G_obsrv.diagonal()))
         assert sum(G_obsrv.diagonal()) == 0
 
         # subgraph for training(5 % edges, pos edges)
