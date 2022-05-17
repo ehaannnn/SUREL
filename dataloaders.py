@@ -330,6 +330,7 @@ class Yelp():
             
             user2item_edge_index_train = np.hstack([user2item_edge_index_train, unid_user2item_edge_index_np])
             user2item_edge_index_test = np.hstack([user2item_edge_index_test, unid_user2item_edge_index_np_test])
+            break
 
         self.graph = torch_geometric.data.data.Data(num_nodes=num_uids+num_iids, edge_index=torch.Tensor(np.hstack([user2item_edge_index_train, user2item_edge_index_test])))
         self.split_edge = {'train': {'edge': torch.Tensor(user2item_edge_index_train[:,126420:].T).type(torch.long)},

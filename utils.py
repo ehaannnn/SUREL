@@ -214,16 +214,22 @@ def get_pos_neg_edges(split, split_edge, ratio=1.0, keep_neg=False):
         raise NotImplementedError
     return pos_edge, neg_edge
 
+def _eval_hits(y_pred_pos, y_pred_neg):
+    K = 10
+    if len(y_pred_neg) < K:
+        return {'hits@{}'.format(K): 1.}
+
+    kth_score_in_negative_edges = torch.topk(y_pred_neg, K)[0][-1]
+    hitsK = float(torch.sum(y_pred_pos > kth_score_in_negative_edges).cpu()) / len(y_pred_pos)
+
+    return {'hits@{}'.format(K): hitsK}
 
 def evaluate_hits(pos_pred, neg_pred, evaluator):
     results = {}
-    for K in [10, 20, 50, 100]:
-        evaluator.K = K
-        res_hits = evaluator.eval({
-            'y_pred_pos': pos_pred,
-            'y_pred_neg': neg_pred,
-        })[f'hits@{K}']
 
+    for K in [10]:
+        evaluator.K = K
+        res_hits = _eval_hits(pos_pred, neg_pred)[f'hits@{K}']
         results[f'Hits@{K}'] = res_hits
     return results
 
