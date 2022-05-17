@@ -94,8 +94,9 @@ class Yelp():
         testUser = self.tstUsrs
 
         user2item_test = np.array([testUser,testItem])
-        edge_neg_test = np.array([np.random.choice(mats.tocoo().row, 10000), np.random.choice(np.reshape(np.argwhere(label[i]==0), [-1]), 10000)])
-        edge_neg_valid = np.array([np.random.choice(user2item[:,474140:][0,:], 10000), np.random.choice(np.reshape(np.argwhere(label[i]==0), [-1]), 10000)])
+        idx = np.random.choice(mats.tocoo().col, 1)[0]
+        edge_neg_test = np.array([np.random.choice(mats.tocoo().row, 10000), np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)])
+        edge_neg_valid = np.array([np.random.choice(user2item[:,474140:][0,:], 10000), np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)])
 
         self.split_edge = {'train': {'edge': torch.Tensor(user2item[:,:474140].T).type(torch.long)},
                             'valid': {'edge': torch.Tensor(user2item[:,474140:].T).type(torch.long),
