@@ -343,7 +343,7 @@ class DEDataset():
                  use_val=False):
         self.data = Yelp()
         self.graph = self.data.graph
-        self.split_edge = self.data.split_edge()
+        self.split_edge = self.data.split_edge
         self.mask_ratio = mask_ratio
         self.use_degree = use_degree
         self.use_weight = (use_weight and 'edge_weight' in self.graph)
