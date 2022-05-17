@@ -26,6 +26,9 @@ predir = '/media/SSD4TB/users/hangyul/KHGT/Datasets/Yelp/'
 behs = ['pos']
 target = 'buy'
 slot = 5
+trnfile = predir + 'trn_'
+tstfile = predir + 'tst_'
+
 def timeProcess(trnMats):
 	mi = 1e15
 	ma = 0
@@ -73,8 +76,7 @@ def ObtainIIMats(trnMats, predir):
 
 class Yelp():
     def __init__(self):
-        trnfile = predir + 'trn_'
-        tstfile = predir + 'tst_'
+        
         datas = LoadData()
         self.trnMats, self.iiMats, self.tstInt, self.label, self.tstUsrs, args.intTypes, self.maxTime = datas
 
