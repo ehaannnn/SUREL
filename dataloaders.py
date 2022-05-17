@@ -18,6 +18,8 @@ from tqdm import tqdm
 from collections import Counter
 import re
 
+import torch_geometric
+
 from utils import get_pos_neg_edges, np_sampling
 
 class Yelp():
