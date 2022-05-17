@@ -377,7 +377,7 @@ class DEDataset():
         self.len_train = self.train_edge.shape[0]
 
     def process(self, logger):
-        logger.info(f'{self.data.meta_info}\nKeys: {self.graph.keys}')
+        # logger.info(f'{self.data.meta_info}\nKeys: {self.graph.keys}')
         logger.info(
             f'node size {self.num_nodes}, feature dim {self.num_feature}, edge size {self.len_train} with mask ratio {self.mask_ratio}')
         logger.info(
