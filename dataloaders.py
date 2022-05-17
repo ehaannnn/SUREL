@@ -94,15 +94,15 @@ class Yelp():
         testUser = self.tstUsrs
 
         user2item_test = np.array([testUser,testItem]).astype(np.int32)
-        idx = np.random.choice(mats.tocoo().col, 1)[0]
+        idx = np.random.choice(mats.tocoo().col+19800, 1)[0]
         while (True):
             edge_neg_test_user = np.random.choice(mats.tocoo().row, 10000)
-            edge_neg_test_item = np.random.choice(np.reshape(np.argwhere(label[0]==0), [-1]), 10000)
+            edge_neg_test_item = np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)
             if np.sum(edge_neg_test_item!=edge_neg_test_user) == 10000:
                 break
         while (True):
             edge_neg_valid_user = np.random.choice(mats.tocoo().row, 10000)
-            edge_neg_valid_item = np.random.choice(np.reshape(np.argwhere(label[0]==0), [-1]), 10000)
+            edge_neg_valid_item = np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)
             if np.sum(edge_neg_valid_item!=edge_neg_valid_user) == 10000:
                 break
         edge_neg_test = np.array([edge_neg_test_user, edge_neg_test_item]).astype(np.int32)
