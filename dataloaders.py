@@ -87,7 +87,7 @@ class Yelp():
         print('USER', user, 'ITEM', item)
 
 
-        user2item = np.array([mats.tocoo().row,mats.tocoo().col]).astype(np.int32)
+        user2item = np.array([mats.tocoo().row,mats.tocoo().col+19800]).astype(np.int32)
         self.graph = torch_geometric.data.data.Data(num_nodes=user+item, edge_index=torch.Tensor(user2item))
 
         testItem = np.reshape(self.tstInt[np.argwhere(self.tstInt!=None)],[-1])
