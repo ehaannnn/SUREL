@@ -228,7 +228,6 @@ def evaluate_hits(pos_pred, neg_pred, evaluator):
     results = {}
 
     for K in [10]:
-        evaluator.K = K
         res_hits = _eval_hits(pos_pred, neg_pred)[f'hits@{K}']
         results[f'Hits@{K}'] = res_hits
     return results
