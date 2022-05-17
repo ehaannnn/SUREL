@@ -387,6 +387,7 @@ class DEDataset():
         idx = np.random.permutation(self.len_train)
         # pos sample edges masked for training, observed edges for structural features
         self.pos_edge, obsrv_edge = self.train_edge[idx[:self.num_pos]], self.train_edge[idx[self.num_pos:]]
+        logger.info(obsrv_edge)
         val_edge = self.train_edge
         self.val_nodes = torch.unique(self.train_edge).tolist()
 
@@ -395,6 +396,7 @@ class DEDataset():
             obsrv_e_weight = self.train_weight[idx[self.num_pos:]]
             val_e_weight = self.train_weight
         else:
+            logger.info("no use_weight")
             pos_e_weight = np.ones(self.num_pos, dtype=int)
             obsrv_e_weight = np.ones(self.len_train - self.num_pos, dtype=int)
             val_e_weight = np.ones(self.len_train, dtype=int)
@@ -419,6 +421,7 @@ class DEDataset():
                 obsrv_e_weight = np.ones(obsrv_edge.shape[0], dtype=int)
                 full_e_weight = np.ones(full_edge.shape[0], dtype=int)
         else:
+            logger.info("no use_val")
             full_edge, full_e_weight = self.train_edge, self.train_weight
             self.test_nodes = self.val_nodes
 
