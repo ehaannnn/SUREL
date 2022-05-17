@@ -87,16 +87,16 @@ class Yelp():
         print('USER', user, 'ITEM', item)
 
 
-        user2item = np.array([mats.tocoo().row,mats.tocoo().col])
+        user2item = np.array([mats.tocoo().row,mats.tocoo().col]).astype(np.int32)
         self.graph = torch_geometric.data.data.Data(num_nodes=user+item, edge_index=torch.Tensor(user2item))
 
         testItem = np.reshape(self.tstInt[np.argwhere(self.tstInt!=None)],[-1])
         testUser = self.tstUsrs
 
-        user2item_test = np.array([testUser,testItem])
+        user2item_test = np.array([testUser,testItem]).astype(np.int32)
         idx = np.random.choice(mats.tocoo().col, 1)[0]
-        edge_neg_test = np.array([np.random.choice(mats.tocoo().row, 10000), np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)])
-        edge_neg_valid = np.array([np.random.choice(user2item[:,474140:][0,:], 10000), np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)])
+        edge_neg_test = np.array([np.random.choice(mats.tocoo().row, 10000), np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)]).astype(np.int32)
+        edge_neg_valid = np.array([np.random.choice(user2item[:,474140:][0,:], 10000), np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)]).astype(np.int32)
 
         self.split_edge = {'train': {'edge': torch.Tensor(user2item[:,:474140].T).type(torch.long)},
                             'valid': {'edge': torch.Tensor(user2item[:,474140:].T).type(torch.long),
