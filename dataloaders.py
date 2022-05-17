@@ -332,11 +332,11 @@ class Yelp():
             user2item_edge_index_test = np.hstack([user2item_edge_index_test, unid_user2item_edge_index_np_test])
 
         self.graph = torch_geometric.data.data.Data(num_nodes=num_uids+num_iids, edge_index=torch.Tensor(np.hstack([user2item_edge_index_train, user2item_edge_index_test])))
-        self.split_edge = {'train': {'edge': torch.Tensor(user2item_edge_index_train[:,126420:].reshape((-1,2))).type(torch.int32)},
-        'valid': {'edge': torch.Tensor(user2item_edge_index_train[:,:126420].reshape((-1,2))).type(torch.int32),
-                 'edge_neg': torch.Tensor(user2item_edge_index_train[:,:63210].reshape((-1,2))).type(torch.int32)},
-        'test': {'edge': torch.Tensor(user2item_edge_index_test[:,:23390].reshape((-1,2))).type(torch.int32),
-                'edge_neg': torch.Tensor(user2item_edge_index_test[:,23390:].reshape((-1,2))).type(torch.int32)}}
+        self.split_edge = {'train': {'edge': torch.Tensor(user2item_edge_index_train[:,126420:].T).type(torch.int32)},
+        'valid': {'edge': torch.Tensor(user2item_edge_index_train[:,:126420].T).type(torch.int32),
+                 'edge_neg': torch.Tensor(user2item_edge_index_train[:,:63210].T).type(torch.int32)},
+        'test': {'edge': torch.Tensor(user2item_edge_index_test[:,:23390].T).type(torch.int32),
+                'edge_neg': torch.Tensor(user2item_edge_index_test[:,23390:].T).type(torch.int32)}}
 
 
 class DEDataset():
