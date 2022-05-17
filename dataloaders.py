@@ -90,19 +90,19 @@ class Yelp():
         user2item = np.array([mats.tocoo().row,mats.tocoo().col+19800]).astype(np.int32)
         self.graph = torch_geometric.data.data.Data(num_nodes=user+item, edge_index=torch.Tensor(user2item))
 
-        testItem = np.reshape(self.tstInt[np.argwhere(self.tstInt!=None)],[-1])
+        testItem = np.reshape(self.tstInt[np.argwhere(self.tstInt!=None)],[-1])+19800
         testUser = self.tstUsrs
 
         user2item_test = np.array([testUser,testItem]).astype(np.int32)
-        idx = np.random.choice(mats.tocoo().col+19800, 1)[0]
+        idx = np.random.choice(mats.tocoo().row, 1)[0]
         while (True):
             edge_neg_test_user = np.random.choice(mats.tocoo().row, 10000)
-            edge_neg_test_item = np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)
+            edge_neg_test_item = np.random.choice(np.reshape(np.argwhere(label==0)[:,1], [-1]), 10000)+19800
             if np.sum(edge_neg_test_item!=edge_neg_test_user) == 10000:
                 break
         while (True):
             edge_neg_valid_user = np.random.choice(mats.tocoo().row, 10000)
-            edge_neg_valid_item = np.random.choice(np.reshape(np.argwhere(label[idx]==0), [-1]), 10000)
+            edge_neg_valid_item = np.random.choice(np.reshape(np.argwhere(label==0)[:,1], [-1]), 10000)+19800
             if np.sum(edge_neg_valid_item!=edge_neg_valid_user) == 10000:
                 break
         edge_neg_test = np.array([edge_neg_test_user, edge_neg_test_item]).astype(np.int32)
