@@ -125,6 +125,7 @@ def log_record(logger, tb, out, dic, b_time, batchIdx):
         if idx == (len_test - 1):
             return True
     elif mode == 'val':
+        logger.info(f"mode: val, {np.argmax(dic[val_metric])}, {len_val-1}")
         if np.argmax(dic[val_metric]) == (len_val - 1):
             return True
     return False

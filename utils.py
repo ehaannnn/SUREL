@@ -86,7 +86,7 @@ def gen_sample(S, Tx, K, pos_edges, full_edges, x_embed, args, gtype='Homogeneou
     #     mA[:pivot, :pivot] = 1
     #     mA[pivot:, pivot:] = 1
     perm = torch.arange(num_nodes * num_nodes)[~ (mA.view(-1) > 0)]
-    neg_pair = torch.vstack([perm // num_nodes, perm % num_nodes]).t()
+    neg_pair = torch.vstack([torch.div(perm, num_nodes, rounding_mode='trunc'), perm % num_nodes]).t()
     perms = sample(len(neg_pair), args.k * num_nodes)
     neg_edges = neg_pair[perms].t()
 
