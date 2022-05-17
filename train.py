@@ -31,7 +31,8 @@ def train(model, opti, data, dT):
     return total_loss / len(labels), roc_auc_score(labels, predictions)
 
 
-def eval_model(model, x_dict, x_set, args, evaluator, device, mode='test', return_predictions=False):
+def eval_model(model, x_dict, x_set, args, device, mode='test', return_predictions=False):
+    evaluator = None
     model.eval()
     preds = []
     with torch.no_grad():

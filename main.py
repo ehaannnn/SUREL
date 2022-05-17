@@ -117,7 +117,7 @@ if __name__ == '__main__':
                         use_coalesce=args.use_weight,
                         use_degree=args.use_degree,
                         use_val=args.use_val)
-    evaluator = Evaluator(name=args.dataset)
+    # evaluator = Evaluator(name=args.dataset)
     graphs = g_class.process(logger)
 
     # edges for negative sampling
@@ -193,11 +193,11 @@ if __name__ == '__main__':
 
             if batchIdx > args.rtest and batchIdx % args.eval_steps == 0:
                 bvtime = time.time()
-                out = eval_model(model, val_dict, inf_set, args, evaluator, device, mode='val')
+                out = eval_model(model, val_dict, inf_set, args, device, mode='val')
                 if log_record(logger, tb, out, res_dict, bvtime, batchIdx):
                     patience = 0
                     bttime = time.time()
-                    out = eval_model(model, test_dict, inf_set, args, evaluator, device, mode='test')
+                    out = eval_model(model, test_dict, inf_set, args, device, mode='test')
                     if log_record(logger, tb, out, res_dict, bttime, batchIdx):
                         checkpoint = {'state_dict': model.state_dict(),
                                       'optimizer': optimizer.state_dict(),
