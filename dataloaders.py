@@ -22,321 +22,82 @@ import torch_geometric
 
 from utils import get_pos_neg_edges, np_sampling
 
+predir = '/media/SSD4TB/users/hangyul/KHGT/Datasets/Yelp/'
+behs = ['pos']
+target = 'buy'
+slot = 5
+def timeProcess(trnMats):
+	mi = 1e15
+	ma = 0
+	for i in range(len(trnMats)):
+		minn = np.min(trnMats[i].data)
+		maxx = np.max(trnMats[i].data)
+		mi = min(mi, minn)
+		ma = max(ma, maxx)
+	maxTime = 0
+	for i in range(len(trnMats)):
+		newData = ((trnMats[i].data - mi) / (3600*24*slot)).astype(np.int32)
+		maxTime = max(np.max(newData), maxTime)
+		trnMats[i] = csr_matrix((newData, trnMats[i].indices, trnMats[i].indptr), shape=trnMats[i].shape)
+	print('MAX TIME', maxTime)
+	return trnMats, maxTime + 1
+
+def LoadData():
+	trnMats = list()
+	for i in range(len(behs)):
+		beh = behs[i]
+		path = trnfile + beh
+		with open(path, 'rb') as fs:
+			mat = pickle.load(fs)
+		trnMats.append(mat)
+		if target == 'click':
+			trnLabel = (mat if i==0 else 1 * (trnLabel + mat != 0))
+		elif target == 'buy' and i == len(behs) - 1:
+			trnLabel = 1 * (mat != 0)
+	trnMats, maxTime = timeProcess(trnMats)
+	# test set
+	path = tstfile + 'int'
+	with open(path, 'rb') as fs:
+		tstInt = np.array(pickle.load(fs))
+	tstStat = (tstInt!=None)
+	tstUsrs = np.reshape(np.argwhere(tstStat!=False), [-1])
+
+	iiMats = ObtainIIMats(trnMats, predir)
+
+	return trnMats, iiMats, tstInt, trnLabel, tstUsrs, len(behs), maxTime
+def ObtainIIMats(trnMats, predir):
+	with open(predir+'iiMats', 'rb') as fs:
+		iiMats = pickle.load(fs)
+
+	return iiMats
+
 class Yelp():
     def __init__(self):
-        def parse_yelp(dir):
-            """
-            Read the yelp dataset from .tar file
-            :param dir: the path to raw tar file (yelp_dataset.tar)
-            :return: yelp_business, yelp_review, yelp_user, yelp_checkin, yelp_tip, pandas.DataFrame
-            """
+        trnfile = predir + 'trn_'
+        tstfile = predir + 'tst_'
+        datas = LoadData()
+        self.trnMats, self.iiMats, self.tstInt, self.label, self.tstUsrs, args.intTypes, self.maxTime = datas
 
-            #Importing Yelp business data
-            with open(os.path.join(dir, 'yelp_academic_dataset_business.json'), encoding='utf-8') as json_file:
-                data = [json.loads(line) for line in json_file]    
-                df_yelp_business = pd.DataFrame(data)
-            
-            #Importing Yelp review data
-            with open(os.path.join(dir, 'yelp_academic_dataset_review.json'), encoding='utf-8') as json_file:
-                data = [json.loads(line) for line in json_file]    
-                df_yelp_review = pd.DataFrame(data)
-
-        
-            #Importing Yelp user data
-            with open(os.path.join(dir, 'yelp_academic_dataset_user.json'), encoding='utf-8') as json_file:
-                data = [json.loads(line) for line in json_file]    
-                df_yelp_user = pd.DataFrame(data)
-            
-            #Importing Yelp checkin data
-            with open(os.path.join(dir, 'yelp_academic_dataset_checkin.json'), encoding='utf-8') as json_file:
-                data = [json.loads(line) for line in json_file]    
-                df_yelp_checkin = pd.DataFrame(data)
-                
-            #Importing Yelp tip data
-            with open(os.path.join(dir, 'yelp_academic_dataset_tip.json'), encoding='utf-8') as json_file:
-                data = [json.loads(line) for line in json_file]    
-                df_yelp_tip = pd.DataFrame(data) 
-                
-            return df_yelp_business, df_yelp_user, df_yelp_review, df_yelp_tip, df_yelp_checkin
-
-        # processed_dir = osp.join(root, 'processed')
-
-        untar_file_path = osp.join('/media/SSD4TB/users/hangyul/PEAGNN/datasets/Yelp', 'yelp_dataset')
-        def drop_infrequent_concept_from_str(df, concept_name):
-            concept_strs = [concept_str if concept_str != None else '' for concept_str in df[concept_name]]
-            duplicated_concept = [concept_str.split(', ') for concept_str in concept_strs]
-            duplicated_concept = list(itertools.chain.from_iterable(duplicated_concept))
-            business_category_dict = Counter(duplicated_concept)
-            del business_category_dict['']
-            del business_category_dict['N/A']
-            unique_concept = [k for k, v in business_category_dict.items() if
-                            v >= 0.1 * np.max(list(business_category_dict.values()))]
-            concept_strs = [
-                ','.join([concept for concept in concept_str.split(', ') if concept in unique_concept])
-                for concept_str in concept_strs
-            ]
-            df[concept_name] = concept_strs
-            return df
-
-        # print('Data frame not found in {}! Read from raw data!'.format(processed_dir))
-        business, user, review, tip, checkin = parse_yelp(untar_file_path)
-
-        print('Preprocessing...')
-        # Extract business hours
-        hours = []
-        for hr in business['hours']:
-            hours.append(hr) if hr != None else hours.append({})
-
-        df_hours = (
-            pd.DataFrame(hours)
-                .fillna(False))
-
-        # Replacing all times with True
-        df_hours.where(df_hours == False, True, inplace=True)
-
-        
-
-        # Filter business categories > 1% of max value
-        business = drop_infrequent_concept_from_str(business, 'categories')
-
-        # Extract business attributes
-        attributes = []
-        for attr_list in business['attributes']:
-            attr_dict = {}
-            if attr_list != None:
-                for a, b in attr_list.items():
-                    if (b.lower() == 'true' or ''.join(re.findall(r"'(.*?)'", b)).lower() in (
-                            'outdoor', 'yes', 'allages', '21plus', '19plus', '18plus', 'full_bar', 'beer_and_wine',
-                            'yes_free', 'yes_corkage', 'free', 'paid', 'quiet', 'average', 'loud', 'very_loud',
-                            'casual',
-                            'formal', 'dressy')):
-                        attr_dict[a.strip()] = True
-                    elif (b.lower() in ('false', 'none') or ''.join(re.findall(r"'(.*?)'", b)).lower() in (
-                            'no', 'none')):
-                        attr_dict[a.strip()] = False
-                    elif (b[0] != '{'):
-                        attr_dict[a.strip()] = True
-                    else:
-                        for c in b.split(","):
-                            attr_dict[a.strip()] = False
-                            if (c == '{}'):
-                                attr_dict[a.strip()] = False
-                                break
-                            elif (c.split(":")[1].strip().lower() == 'true'):
-                                attr_dict[a.strip()] = True
-                                break
-            attributes.append([k for k, v in attr_dict.items() if v == True])
-
-        business['attributes'] = [','.join(map(str, l)) for l in attributes]
-
-        # Concating business df
-        business_concat = [business.iloc[:, :-1], df_hours]
-        business = pd.concat(business_concat, axis=1)
-
-        # Compute friend counts
-        user['friends_count'] = [len(f.split(",")) if f != 'None' else 0 for f in user['friends']]
-
-        # Compute checkin counts
-        checkin['checkin_count'] = [len(f.split(",")) if f != 'None' else 0 for f in checkin['date']]
-
-        # Extract business checkin times
-        checkin_years = []
-        checkin_months = []
-        checkin_time = []
-        for checkin_list in checkin['date']:
-            checkin_years_ar = []
-            checkin_months_ar = []
-            checkin_time_ar = []
-            if checkin_list != '':
-                for chk in checkin_list.split(","):
-                    checkin_years_ar.append(chk.strip()[:4])
-                    checkin_months_ar.append(chk.strip()[:7])
-
-                    if int(chk.strip()[11:13]) in range(0, 4):
-                        checkin_time_ar.append('00-03')
-                    elif int(chk.strip()[11:13]) in range(3, 7):
-                        checkin_time_ar.append('03-06')
-                    elif int(chk.strip()[11:13]) in range(6, 10):
-                        checkin_time_ar.append('06-09')
-                    elif int(chk.strip()[11:13]) in range(9, 13):
-                        checkin_time_ar.append('09-12')
-                    elif int(chk.strip()[11:13]) in range(12, 16):
-                        checkin_time_ar.append('12-15')
-                    elif int(chk.strip()[11:13]) in range(15, 19):
-                        checkin_time_ar.append('15-18')
-                    elif int(chk.strip()[11:13]) in range(18, 22):
-                        checkin_time_ar.append('18-21')
-                    elif int(chk.strip()[11:13]) in range(21, 24):
-                        checkin_time_ar.append('21-24')
-
-            checkin_years.append(Counter(checkin_years_ar))
-            checkin_months.append(Counter(checkin_months_ar))
-            checkin_time.append(Counter(checkin_time_ar))
-
-        df_checkin = (pd.concat([
-            pd.DataFrame(checkin_years)
-                .fillna('0').sort_index(axis=1),
-            pd.DataFrame(checkin_months)
-                .fillna('0').sort_index(axis=1),
-            pd.DataFrame(checkin_time)
-                .fillna('0').sort_index(axis=1)], axis=1))
-
-        num_core = 10
-
-        # Concating checkin df
-        checkin_concat = [checkin, df_checkin]
-        checkin = pd.concat(checkin_concat, axis=1)
-
-        # Merging business and checkin
-        business = pd.merge(business, checkin, on='business_id', how='left').fillna(0)
-
-        # Select only relevant columns of review and tip
-        review = review.iloc[:, [1, 2]]
-        tip = tip.iloc[:, [0, 1]]
-
-        # Concat review and tips
-        reviewtip = pd.concat([review, tip], axis=0)
-
-        # remove duplications
-        business = business.drop_duplicates()
-        user = user.drop_duplicates()
-        reviewtip = reviewtip.drop_duplicates()
-
-        if business.shape[0] != business.business_id.unique().shape[0] or user.shape[0] != \
-                user.user_id.unique().shape[0]:
-            raise ValueError('Duplicates in dfs.')
-
-        #Filter only open business
-        business = business[business.is_open == 1]
-
-        # Compute the business counts for reviewtip
-        bus_count = reviewtip['business_id'].value_counts()
-        bus_count.name = 'bus_count'
-
-        # Remove infrequent business in reviewtip
-        reviewtip = reviewtip[reviewtip.join(bus_count, on='business_id').bus_count > (num_core + 40)]
-
-        # Compute the user counts for reviewtip
-        user_count = reviewtip['user_id'].value_counts()
-        user_count.name = 'user_count'
-        reviewtip = reviewtip.join(user_count, on='user_id')
-
-        # Remove infrequent users in reviewtip
-        reviewtip = reviewtip[
-            (reviewtip.user_count > num_core) & (reviewtip.user_count <= (num_core + 10))]
-
-        # Sync the business and user dataframe
-        user = user[user.user_id.isin(reviewtip['user_id'].unique())]
-        business = business[business.business_id.isin(reviewtip['business_id'].unique())]
-        reviewtip = reviewtip[reviewtip.user_id.isin(user['user_id'].unique())]
-        reviewtip = reviewtip[reviewtip.business_id.isin(business['business_id'].unique())]
-
-        # Compute the updated business and user counts for reviewtip
-        bus_count = reviewtip['business_id'].value_counts()
-        user_count = reviewtip['user_id'].value_counts()
-        bus_count.name = 'bus_count'
-        user_count.name = 'user_count'
-        reviewtip = reviewtip.iloc[:, [0, 1]].join(bus_count, on='business_id')
-        reviewtip = reviewtip.join(user_count, on='user_id')
-
-        def reindex_df(business, user, reviewtip):
-            """
-            reindex business, user, reviewtip in case there are some values missing or duplicates in between
-            :param business: pd.DataFrame
-            :param user: pd.DataFrame
-            :param reviewtip: pd.DataFrame
-            :return: same
-            """
-            print('Reindexing dataframes...')
-            unique_uids = user.user_id.unique()
-            unique_iids = business.business_id.unique()
-
-            num_users = unique_uids.shape[0]
-            num_bus = unique_iids.shape[0]
-
-            raw_uids = np.array(unique_uids, dtype=object)
-            raw_iids = np.array(unique_iids, dtype=object)
-
-            uids = np.arange(num_users)
-            iids = np.arange(num_bus)
-
-            user['user_id'] = uids
-            business['business_id'] = iids
-
-            raw_uid2uid = {raw_uid: uid for raw_uid, uid in zip(raw_uids, uids)}
-            raw_iid2iid = {raw_iid: iid for raw_iid, iid in zip(raw_iids, iids)}
-
-            review_uids = np.array(reviewtip.user_id, dtype=object)
-            review_iids = np.array(reviewtip.business_id, dtype=object)
-            review_uids = [raw_uid2uid[review_uid] for review_uid in review_uids]
-            review_iids = [raw_iid2iid[review_iid] for review_iid in review_iids]
-            reviewtip['user_id'] = review_uids
-            reviewtip['business_id'] = review_iids
-
-            print('Reindex done!')
-
-            return business, user, reviewtip
-
-        # Reindex the bid and uid in case of missing values
-        business, user, reviewtip = reindex_df(business, user, reviewtip)
-
-        user2item_edge_index_train = np.zeros((2, 0))
-        user2item_edge_index_test = np.zeros((2, 0))
-
-        unique_uids = list(np.sort(reviewtip.user_id.unique()))
-        num_uids = len(unique_uids)
-
-        unique_iids = list(np.sort(reviewtip.business_id.unique()))
-        num_iids = len(unique_iids)
+        user, item = self.trnMats[0].shape
+        mats = self.trnMats[0].tocoo()
+        print('USER', user, 'ITEM', item)
 
 
+        user2item = np.array([mats.tocoo().row,mats.tocoo().col])
+        self.graph = torch_geometric.data.data.Data(num_nodes=user+item, edge_index=torch.Tensor(user2item))
 
-        pbar = tqdm(unique_uids, total=len(unique_uids))
+        testItem = np.reshape(tstInt[np.argwhere(tstInt!=None)],[-1])
+        testUser = self.tstUsrs
 
-        sorted_reviewtip = reviewtip.sort_values(['bus_count', 'user_count'])
+        user2item_test = np.array([testUser,testItem])
+        edge_neg_test = np.array([np.random.choice(mats.tocoo().row, 10000), np.random.choice(np.reshape(np.argwhere(label[i]==0), [-1]), 10000)])
+        edge_neg_valid = np.array([np.random.choice(user2item[:,474140:][0,:], 10000), np.random.choice(np.reshape(np.argwhere(label[i]==0), [-1]), 10000)])
 
-        acc = 0
-        uid2nid = {uid: i + acc for i, uid in enumerate(unique_uids)}
-
-        acc += num_uids
-        iid2nid = {iid: i + acc for i, iid in enumerate(unique_iids)}
-
-        e2nid_dict = {'uid': uid2nid, 'iid': iid2nid }
-
-        test_pos_unid_inid_map, neg_unid_inid_map = {}, {}
-
-        for uid in pbar:
-            pbar.set_description('Creating the edges for the user {}'.format(uid))
-            uid_reviewtip = sorted_reviewtip[sorted_reviewtip.user_id == uid]
-            uid_iids = uid_reviewtip.business_id.to_numpy()
-
-            unid = e2nid_dict['uid'][uid]
-            train_pos_uid_iids = list(uid_iids[:-1])  # Use leave one out setup
-            train_pos_uid_inids = [e2nid_dict['iid'][iid] for iid in train_pos_uid_iids]
-            test_pos_uid_iids = list(uid_iids[-1:])
-            test_pos_uid_inids = [e2nid_dict['iid'][iid] for iid in test_pos_uid_iids]
-            neg_uid_iids = list(set(unique_iids) - set(uid_iids))
-            neg_uid_inids = [e2nid_dict['iid'][iid] for iid in neg_uid_iids]
-
-            test_pos_unid_inid_map[unid] = test_pos_uid_inids
-            neg_unid_inid_map[unid] = neg_uid_inids
-
-            unid_user2item_edge_index_np = np.array(
-                [[unid for _ in range(len(train_pos_uid_inids))], train_pos_uid_inids]
-            )
-            unid_user2item_edge_index_np_test = np.array(
-                [[unid for _ in range(len(test_pos_uid_inids))], test_pos_uid_inids]
-            )
-            
-            user2item_edge_index_train = np.hstack([user2item_edge_index_train, unid_user2item_edge_index_np])
-            user2item_edge_index_test = np.hstack([user2item_edge_index_test, unid_user2item_edge_index_np_test])
-
-        self.graph = torch_geometric.data.data.Data(num_nodes=num_uids+num_iids, edge_index=torch.Tensor(np.hstack([user2item_edge_index_train, user2item_edge_index_test])))
-        self.split_edge = {'train': {'edge': torch.Tensor(user2item_edge_index_train[:,126420:].T).type(torch.long)},
-        'valid': {'edge': torch.Tensor(user2item_edge_index_train[:,:126420].T).type(torch.long),
-                 'edge_neg': torch.Tensor(user2item_edge_index_train[:,:63210].T).type(torch.long)},
-        'test': {'edge': torch.Tensor(user2item_edge_index_test[:,:23390].T).type(torch.long),
-                'edge_neg': torch.Tensor(user2item_edge_index_test[:,23390:].T).type(torch.long)}}
+        self.split_edge = {'train': {'edge': torch.Tensor(user2item[:,:474140].T).type(torch.long)},
+                            'valid': {'edge': torch.Tensor(user2item[:,474140:].T).type(torch.long),
+                                    'edge_neg': torch.Tensor(edge_neg_valid.T).type(torch.long)},
+                            'test': {'edge': torch.Tensor(user2item_test.T).type(torch.long),
+                                    'edge_neg': torch.Tensor(edge_neg_test.T).type(torch.long)}}
 
 
 class DEDataset():
