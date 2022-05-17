@@ -81,6 +81,7 @@ class Yelp():
         datas = LoadData()
         self.trnMats, self.iiMats, self.tstInt, self.label, self.tstUsrs, self.intTypes, self.maxTime = datas
 
+        label = self.label
         user, item = self.trnMats[0].shape
         mats = self.trnMats[0].tocoo()
         print('USER', user, 'ITEM', item)
