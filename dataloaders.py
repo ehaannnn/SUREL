@@ -108,7 +108,7 @@ class Yelp():
         edge_neg_test = np.array([edge_neg_test_user, edge_neg_test_item]).astype(np.int32)
         edge_neg_valid = np.array([edge_neg_valid_user,edge_neg_valid_item]).astype(np.int32)
 
-        self.split_edge = {'train': {'edge': torch.Tensor(user2item].T).type(torch.long)}
+        self.split_edge = {'train': {'edge': torch.Tensor(user2item.T).type(torch.long) }}
 
 
 class DEDataset():
