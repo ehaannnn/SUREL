@@ -29,7 +29,7 @@ if __name__ == '__main__':
     parser.add_argument('--x_dim', type=int, default=0, help='dim of raw node features')
     parser.add_argument('--data_usage', type=float, default=1.0, help='use partial dataset')
     parser.add_argument('--train_ratio', type=float, default=0.05, help='mask partial edges for training')
-    parser.add_argument('--valid_ratio', type=float, default=0.1, help='use partial valid set')
+    parser.add_argument('--valid_ratio', type=float, default=1.0, help='use partial valid set')
     parser.add_argument('--test_ratio', type=float, default=1.0, help='use partial test set')
     parser.add_argument('--metric', type=str, default='mrr', help='metric for evaluating performance',
                         choices=['auc', 'mrr', 'hit'])
